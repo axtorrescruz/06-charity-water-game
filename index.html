@@ -1,0 +1,62 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>Hamon: Ripple Effect</title>
+  <link rel="stylesheet" href="styles.css" />
+</head>
+<body>
+  <div id="game">
+    <!-- Sun -->
+    <div class="sun"></div>
+
+    <!-- Top-left water can & score -->
+    <div class="hud">
+  <img class="water-can" src="img/water-can-transparent.png" alt="Water can" title="Water can (decor)">
+      <div class="score-display">Score: <span id="score">0</span></div>
+    </div>
+
+    <!-- Lives (red X) -->
+    <div class="lives" id="lives">
+      <!-- We'll add up to 3 red X indicators here -->
+    </div>
+
+    <!-- Clouds row (6 clouds) -->
+    <div class="cloud-row" id="cloudRow">
+      <div class="cloud" data-cloud-index="0"></div>
+      <div class="cloud" data-cloud-index="1"></div>
+      <div class="cloud" data-cloud-index="2"></div>
+      <div class="cloud" data-cloud-index="3"></div>
+      <div class="cloud" data-cloud-index="4"></div>
+      <div class="cloud" data-cloud-index="5"></div>
+    </div>
+
+    <!-- Ocean area (darker blue at bottom) -->
+    <div id="ocean">
+      <!-- ripples will go here -->
+      <div id="ocean-surface-marker"></div>
+    </div>
+
+    <!-- Transparent clickable area catches taps/clicks -->
+    <div id="click-layer" aria-hidden="true"></div>
+
+    <!-- Welcome overlay -->
+    <div id="welcome">
+      <h1>Hamon: Ripple Effect</h1>
+      <p class="sponsor">sponsored by charity: water</p>
+      <button id="startBtn">Start Game</button>
+      <p class="hint">Tap the ocean when clean drops fall. Avoid polluted drops!</p>
+    </div>
+
+    <!-- Win/Lose overlays -->
+    <div id="endScreen" class="hidden">
+      <h2 id="endTitle"></h2>
+      <p>Score: <span id="finalScore">0</span></p>
+      <button id="playAgain">Play Again</button>
+    </div>
+  </div>
+
+  <script src="script.js"></script>
+</body>
+</html>
