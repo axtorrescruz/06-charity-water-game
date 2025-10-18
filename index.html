@@ -13,7 +13,7 @@
 
     <!-- Top-left water can & score -->
     <div class="hud">
-  <img class="water-can" src="img/water-can-transparent.png" alt="Water can" title="Water can (decor)">
+      <img class="water-can" src="img/water-can-transparent.png" alt="Water can" title="Water can (decor)">
       <div class="score-display">Score: <span id="score">0</span></div>
     </div>
 
@@ -49,13 +49,23 @@
       <p class="hint">Tap the ocean when clean drops fall. Avoid polluted drops!</p>
     </div>
 
+    <!-- Halfway message (hidden until triggered) -->
+    <div id="halfwayMsg" class="hidden">Halfway There!</div>
+
     <!-- Win/Lose overlays -->
     <div id="endScreen" class="hidden">
       <h2 id="endTitle"></h2>
       <p>Score: <span id="finalScore">0</span></p>
       <button id="playAgain">Play Again</button>
     </div>
+
   </div>
+
+
+  <footer id="footer">
+    <a href="#" id="link1">Link 1</a> |
+    <a href="#" id="link2">Link 2</a>
+  </footer>
 
   <script src="script.js"></script>
 </body>

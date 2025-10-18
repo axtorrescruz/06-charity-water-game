@@ -2,15 +2,27 @@
    Updated: drops use inline SVG teardrop shapes (larger semicircle base at bottom,
    rounded point at top). Polluted drops ripple & disappear when clicked but still
    spawn a red X penalty.
+
+   Modifications:
+   - clouds lowered slightly via CSS
+   - spawn & fall speed double each time score reaches a multiple of 10 (10,20,...)
+   - added footer placeholders in HTML/CSS
+   - added halfway message shown when score reaches half of MAX_SCORE
 */
 
 (() => {
   const NUM_CLOUDS = 6;
-  const SPAWN_INTERVAL = 3000; // one drop every 3 seconds total
-  const DROP_DURATION = 3000;  // ms for drop to fall
+  const BASE_SPAWN_INTERVAL = 3000; // base: one drop every 3 seconds total
+  const BASE_DROP_DURATION = 3000;  // base ms for drop to fall
   const CLEAN_PROB = 0.66;
-  const MAX_SCORE = 10;
+  const MAX_SCORE = 30;
   const MAX_X = 3;
+
+  // dynamic speed state
+  let speedMultiplier = 1; // 1, 2, 4, ... doubles each interval-of-10
+  let spawnIntervalCurrent = BASE_SPAWN_INTERVAL;
+  let dropDurationCurrent = BASE_DROP_DURATION;
+  let lastSpeedupScore = 0; // to avoid multiple triggers for same score
 
   // DOM references
   const game = document.getElementById('game');
@@ -26,12 +38,14 @@
   const endTitle = document.getElementById('endTitle');
   const finalScore = document.getElementById('finalScore');
   const playAgain = document.getElementById('playAgain');
+  const halfwayMsg = document.getElementById('halfwayMsg');
 
   let score = 0;
   let xCount = 0;
   let activeDrops = new Set();
   let running = false;
   let spawnTimer = null;
+  let halfwayTriggered = false;
 
   // Reset everything
   function resetGameState() {
@@ -47,6 +61,18 @@
     const sun = document.querySelector('.sun');
     if (sun) sun.classList.remove('hidden');
     if (cloudRow) cloudRow.classList.remove('hidden');
+
+    // reset speed state
+    speedMultiplier = 1;
+    spawnIntervalCurrent = BASE_SPAWN_INTERVAL;
+    dropDurationCurrent = BASE_DROP_DURATION;
+    lastSpeedupScore = 0;
+    halfwayTriggered = false;
+    hideHalfwayMsg();
+    if (spawnTimer) {
+      clearInterval(spawnTimer);
+      spawnTimer = null;
+    }
   }
 
   function clearActiveDrops() {
@@ -70,11 +96,12 @@
 
   function showEndScreen(win) {
     running = false;
-    clearInterval(spawnTimer);
-    spawnTimer = null;
+    if (spawnTimer) {
+      clearInterval(spawnTimer);
+      spawnTimer = null;
+    }
     if (win) {
       endTitle.textContent = 'You Win!';
-      // Make ocean blue, sky normal, sun visible
       ocean.classList.remove('polluted');
       document.body.classList.remove('dark-sky');
       const sun = document.querySelector('.sun');
@@ -82,7 +109,6 @@
       if (cloudRow) cloudRow.classList.add('hidden');
     } else {
       endTitle.textContent = 'You Lose';
-      // Make ocean polluted and keep it green until reset
       ocean.classList.add('polluted');
       document.body.classList.add('dark-sky');
       const sun = document.querySelector('.sun');
@@ -93,11 +119,19 @@
     endScreen.classList.remove('hidden');
   }
 
-  // Start spawning globally every 3s
+  // Start spawning using the current spawn interval
   function startSpawning() {
-    // spawn immediately then every 3s
+    // spawn immediately then every spawnIntervalCurrent ms
     spawnDropRandom();
-    spawnTimer = setInterval(spawnDropRandom, SPAWN_INTERVAL);
+    if (spawnTimer) clearInterval(spawnTimer);
+    spawnTimer = setInterval(spawnDropRandom, spawnIntervalCurrent);
+  }
+
+  function adjustSpawnTimer() {
+    if (spawnTimer) {
+      clearInterval(spawnTimer);
+      spawnTimer = setInterval(spawnDropRandom, spawnIntervalCurrent);
+    }
   }
 
   function spawnDropRandom() {
@@ -132,8 +166,6 @@
         Z" />`;
 
     // White crescent shine near the bottom (visible)
-    // This arc is positioned at the bottom of the drop and is white with some opacity
-    // Move the shine group further right (increase translate x value)
     const shine = `
       <g transform="translate(12, 34) rotate(-90)">
         <path class="shine" d="
@@ -154,7 +186,6 @@
       </svg>
     `;
   }
-
 
   function spawnDropUnderCloud(cloudEl) {
     if (!running) return;
@@ -193,16 +224,16 @@
     const endY = gameRect.bottom - gameRect.top + 20;
     const oceanEntryY = oceanRect.top - gameRect.top;
 
-    // Animate drop by changing top with a CSS transition
+    // Animate drop by changing top with a CSS transition using current drop duration
     requestAnimationFrame(() => {
-      dropContainer.style.transitionDuration = `${DROP_DURATION}ms`;
+      dropContainer.style.transitionDuration = `${dropDurationCurrent}ms`;
       dropContainer.getBoundingClientRect(); // force reflow
       dropContainer.style.top = `${endY}px`;
     });
 
     const totalDistance = endY - spawnY;
     const distToOcean = Math.max(0, oceanEntryY - spawnY);
-    const timeToOcean = totalDistance <= 0 ? 0 : Math.round((distToOcean / totalDistance) * DROP_DURATION);
+    const timeToOcean = totalDistance <= 0 ? 0 : Math.round((distToOcean / totalDistance) * dropDurationCurrent);
 
     const tOcean = setTimeout(() => {
       dropObj.inOcean = true;
@@ -213,7 +244,7 @@
     const tEnd = setTimeout(() => {
       if (dropObj.el && dropObj.el.parentElement) dropObj.el.remove();
       activeDrops.delete(dropObj);
-    }, DROP_DURATION + 80);
+    }, dropDurationCurrent + 80);
     dropObj.removeTimers.push(tEnd);
   }
 
@@ -244,6 +275,14 @@
     }
   });
 
+  // Allow pressing spacebar to simulate click
+window.addEventListener('keydown', (e) => {
+  if (e.code === 'Space') {
+    e.preventDefault();
+    clickLayer.dispatchEvent(new PointerEvent('pointerdown'));
+  }
+});
+
   function doPollutedPenalty() {
     // If game is already over, keep ocean polluted and skip animation
     if (xCount >= MAX_X - 1) {
@@ -272,6 +311,23 @@
     activeDrops.delete(dropObj);
     score++;
     scoreEl.textContent = score;
+
+    // Check halfway
+    if (!halfwayTriggered && score >= Math.ceil(MAX_SCORE / 2)) {
+      halfwayTriggered = true;
+      showHalfwayMsg();
+    }
+
+    // Check speedup on multiples of 10
+    if (score % 10 === 0 && score > 0 && lastSpeedupScore !== score) {
+      lastSpeedupScore = score;
+      speedMultiplier *= 2;
+      spawnIntervalCurrent = Math.max(100, Math.round(BASE_SPAWN_INTERVAL / speedMultiplier));
+      dropDurationCurrent = Math.max(80, Math.round(BASE_DROP_DURATION / speedMultiplier));
+      // restart spawn timer with new interval
+      adjustSpawnTimer();
+    }
+
     if (score >= MAX_SCORE) setTimeout(() => showEndScreen(true), 250);
   }
 
@@ -285,6 +341,24 @@
     r.style.bottom = `${bottomOffset}px`;
     game.appendChild(r);
     setTimeout(() => r.remove(), 1000);
+  }
+
+  function showHalfwayMsg() {
+    if (!halfwayMsg) return;
+    halfwayMsg.classList.remove('hidden');
+    halfwayMsg.classList.add('visible');
+    // hide after 2.5s
+    setTimeout(() => {
+      hideHalfwayMsg();
+    }, 2500);
+  }
+  function hideHalfwayMsg() {
+    if (!halfwayMsg) return;
+    halfwayMsg.classList.remove('visible');
+    // allow display:none after transition
+    setTimeout(() => {
+      halfwayMsg.classList.add('hidden');
+    }, 350);
   }
 
   startBtn.addEventListener('click', startGame);
