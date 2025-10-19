@@ -63,10 +63,13 @@ body.dark-sky {
   align-items:center;
 }
 .water-can{
-  width:48px;
-  height:40px;
+  width:58px;
+  height:50px;
   object-fit:contain;
   display:block;
+  border:1px solid var(--white);
+  padding:2px;
+  background:var(--white);
 }
 .score-display{
   font-size:28px;
@@ -113,30 +116,9 @@ body.dark-sky {
 .cloud{
   width:10%;
   min-width:60px;
-  aspect-ratio: 2.6 / 1;
-  background:var(--cloud);
-  border-radius:50% 50% 40% 40%;
-  box-shadow:0 0 0 6px rgba(0,0,0,0.05) inset, 0 6px 0 rgba(0,0,0,0.12);
-  position:relative;
-  border:3px solid rgba(0,0,0,0.12);
-}
-.cloud::before, .cloud::after{
-  content:'';
-  position:absolute;
-  background:var(--cloud);
-  border-radius:50%;
-}
-.cloud::before{
-  width:70%;
-  height:70%;
-  left:-20%;
-  top:-30%;
-}
-.cloud::after{
-  width:55%;
-  height:55%;
-  right:-10%;
-  top:-20%;
+  display: block;
+  object-fit: contain;
+  mix-blend-mode: multiply; /* Makes white areas transparent, keeps darker cloud visible */
 }
 
 /* Ocean at bottom */
